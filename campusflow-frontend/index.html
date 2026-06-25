@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CampusFlow</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  /* ===== config: change this if your backend runs elsewhere ===== */
+  /* set in JS below: API_BASE */
+
+  :root{
+    --bg:#0c1b1f; --surface:#122a30; --surface-2:#18373f; --border:#235059;
+    --text:#e8f6f4; --dim:#8fb3b3;
+    --aqua:#2fe6d6; --mint:#7ef0b0; --amber:#ffc861; --coral:#ff7a6b;
+    --radius:14px; --shadow:0 6px 24px rgba(0,0,0,.35);
+    --sans:"Space Grotesk",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  a{color:var(--aqua)}
+  .mono{font-family:var(--mono)}
+  .dim{color:var(--dim)}
+
+  /* layout */
+  .wrap{max-width:1080px;margin:0 auto;padding:20px}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border)}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.5px}
+  .brand .dot{width:11px;height:11px;border-radius:50%;background:var(--aqua);box-shadow:0 0 12px var(--aqua)}
+  .who{font-size:13px;text-align:right;line-height:1.3}
+  .grid{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:18px}
+  @media(max-width:840px){.grid{grid-template-columns:1fr}}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:18px}
+  .card h2{margin:0 0 4px;font-size:16px}
+  .card .sub{font-size:12.5px;color:var(--dim);margin-bottom:14px}
+
+  label{display:block;font-size:12px;color:var(--dim);margin:10px 0 5px}
+  input,textarea,select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);
+    border-radius:10px;padding:10px 12px;font-family:var(--sans);font-size:14px}
+  input:focus,textarea:focus{outline:2px solid var(--aqua);outline-offset:1px;border-color:transparent}
+  textarea{resize:vertical;min-height:90px}
+  .row{display:flex;gap:10px}.row>*{flex:1}
+
+  .toggle{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:13px;color:var(--text)}
+  .switch{position:relative;width:42px;height:24px;flex:0 0 auto}
+  .switch input{opacity:0;width:0;height:0}
+  .slider{position:absolute;inset:0;background:var(--surface-2);border:1px solid var(--border);border-radius:24px;cursor:pointer;transition:.2s}
+  .slider:before{content:"";position:absolute;height:16px;width:16px;left:3px;top:3px;background:var(--dim);border-radius:50%;transition:.2s}
+  .switch input:checked+.slider{background:rgba(47,230,214,.25);border-color:var(--aqua)}
+  .switch input:checked+.slider:before{transform:translateX(18px);background:var(--aqua)}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:16px;
+    background:var(--aqua);color:#04181a;font-weight:700;border:0;border-radius:11px;padding:12px;font-size:14px;cursor:pointer;transition:.15s}
+  .btn:hover{filter:brightness(1.08)}.btn:disabled{opacity:.55;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--aqua);border:1px solid var(--border)}
+
+  /* task list */
+  .task{display:flex;align-items:flex-start;gap:12px;padding:12px;border:1px solid var(--border);border-radius:12px;margin-bottom:10px;background:var(--bg)}
+  .task .when{font-size:11.5px;color:var(--amber)}
+  .task .t-title{font-weight:600;font-size:14px}
+  .task .pill{font-size:11px;color:var(--aqua);border:1px solid var(--border);border-radius:20px;padding:2px 9px;align-self:center}
+  .empty{color:var(--dim);font-size:13px;text-align:center;padding:18px;border:1px dashed var(--border);border-radius:12px}
+
+  /* automation pulse + log */
+  .auto{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:11px;margin-bottom:9px;background:var(--bg);font-size:13px}
+  .auto .icn{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:14px;flex:0 0 auto}
+  .badge{margin-left:auto;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+  .b-success{color:#06241a;background:var(--mint)}
+  .b-pending{color:#2a1d00;background:var(--amber);animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.55}}
+
+  .bullets{list-style:none;padding:0;margin:6px 0 0}
+  .bullets li{padding:8px 12px;border-left:3px solid var(--aqua);background:var(--bg);border-radius:0 8px 8px 0;margin-bottom:8px;font-size:13.5px}
+
+  /* auth screen */
+  .auth{min-height:100vh;display:grid;place-items:center;padding:20px}
+  .auth .card{width:100%;max-width:400px;margin:0}
+  .tabs{display:flex;gap:8px;margin-bottom:14px}
+  .tabs button{flex:1;background:transparent;border:1px solid var(--border);color:var(--dim);padding:9px;border-radius:9px;cursor:pointer;font-family:var(--sans)}
+  .tabs button.on{background:var(--surface-2);color:var(--text);border-color:var(--aqua)}
+
+  .tip{font-size:13px;line-height:1.5}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--surface-2);
+    border:1px solid var(--aqua);color:var(--text);padding:12px 18px;border-radius:11px;box-shadow:var(--shadow);
+    font-size:13.5px;opacity:0;pointer-events:none;transition:.25s;z-index:50}
+  .toast.show{opacity:1}
+  .toast.err{border-color:var(--coral)}
+  .hidden{display:none!important}
+  h1.big{font-size:22px;margin:0 0 2px}
+</style>
+</head>
+<body>
+
+<!-- ===================== AUTH ===================== -->
+<div id="authView" class="auth">
+  <div class="card">
+    <div class="brand" style="margin-bottom:14px"><span class="dot"></span> CampusFlow</div>
+    <div class="tabs">
+      <button id="tabLogin" class="on" onclick="setMode('login')">Log in</button>
+      <button id="tabReg" onclick="setMode('register')">Register</button>
+    </div>
+
+    <div id="regFields" class="hidden">
+      <label>Full name</label><input id="f-name" placeholder="Manvanth" />
+      <div class="row">
+        <div><label>Branch</label><input id="f-branch" placeholder="AIML" /></div>
+        <div><label>Year</label><input id="f-year" placeholder="3rd" /></div>
+      </div>
+      <label>WhatsApp number (joined to Twilio sandbox)</label>
+      <input id="f-phone" class="mono" placeholder="+9198XXXXXXXX" />
+      <label>Subjects (comma separated)</label><input id="f-subjects" placeholder="DBMS, OS, CN" />
+    </div>
+
+    <label>Email</label><input id="f-email" type="email" placeholder="you@college.edu" />
+    <label>Password</label><input id="f-pass" type="password" placeholder="••••••••" />
+    <button class="btn" id="authBtn" onclick="doAuth()">Log in</button>
+    <p class="dim" id="authMsg" style="font-size:12px;margin:12px 0 0;text-align:center"></p>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="appView" class="hidden">
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span> CampusFlow</div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <div class="who"><strong id="u-name"></strong><br/><span class="dim mono" id="u-meta"></span></div>
+      <button class="btn ghost" style="width:auto;margin:0;padding:8px 14px" onclick="logout()">Log out</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <h1 class="big" id="greeting"></h1>
+    <span class="dim" id="dateline"></span>
+
+    <div class="grid">
+      <!-- LEFT -->
+      <div>
+        <!-- Add deadline -->
+        <div class="card">
+          <h2>Add a deadline</h2>
+          <div class="sub">Creating it sends a WhatsApp confirmation and a Google Calendar event automatically.</div>
+          <label>Title</label><input id="t-title" placeholder="DBMS Assignment 3" />
+          <div class="row">
+            <div><label>Subject</label><input id="t-subject" placeholder="DBMS" /></div>
+            <div><label>Due</label><input id="t-deadline" type="datetime-local" /></div>
+          </div>
+          <label>Remind me at</label><input id="t-remind" type="datetime-local" />
+          <div class="toggle">
+            <span class="switch"><input id="t-cal" type="checkbox" checked /><span class="slider"></span></span>
+            Add to Google Calendar
+          </div>
+          <button class="btn" id="addBtn" onclick="addTask()">Add deadline &amp; notify</button>
+        </div>
+
+        <!-- Notice summarizer -->
+        <div class="card">
+          <h2>Notice summarizer</h2>
+          <div class="sub">Paste a college notice. AI gives a 3-point TL;DR, then broadcasts it to your group on WhatsApp + adds the date to everyone's calendar.</div>
+          <label>Notice text</label>
+          <textarea id="n-text" placeholder="Mid-sem DBMS exam on July 10, 9 AM, Block C. Bring hall ticket. Covers units 1-4."></textarea>
+          <div class="row">
+            <div><label>Event title</label><input id="n-title" placeholder="Mid-sem Exam" /></div>
+            <div><label>Event date</label><input id="n-date" type="datetime-local" /></div>
+          </div>
+          <label>Broadcast to (comma-separated WhatsApp numbers)</label>
+          <input id="n-phones" class="mono" placeholder="+9198..., +9197..." />
+          <button class="btn ghost" id="sumBtn" onclick="summarize()">Summarize</button>
+          <ul class="bullets hidden" id="n-bullets"></ul>
+          <button class="btn hidden" id="castBtn" onclick="broadcast()">Broadcast to group</button>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div>
+        <div class="card">
+          <h2>Tip of the day</h2>
+          <div class="sub">Study smart</div>
+          <div class="tip" id="tip"></div>
+        </div>
+
+        <div class="card">
+          <h2>Upcoming</h2>
+          <div class="sub">Your tracked deadlines</div>
+          <div id="taskList"></div>
+        </div>
+
+        <div class="card">
+          <h2>My automations</h2>
+          <div class="sub">Live WhatsApp + Calendar triggers</div>
+          <div id="autoList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* ====== CONFIG ====== */
+const API_BASE = "http://localhost:4000";   // <-- your backend
+
+/* ====== STATE ====== */
+const state = { student:null, tasks:[], autos:[], lastSummary:null };
+let mode = "login";
+
+const TIPS = [
+  "Active recall beats re-reading. Close the notes, write what you remember, then check.",
+  "Add the deadline the moment it's announced — future-you forgets within the hour.",
+  "Two-minute rule: if a task takes under 2 min, do it now instead of tracking it.",
+  "Space your revisions: 1 day, 3 days, 7 days. Cramming the night before loses ~40%.",
+  "Teach a concept out loud. If you can't explain it simply, you don't know it yet."
+];
+
+/* ====== HELPERS ====== */
+const $ = id => document.getElementById(id);
+function toast(msg, err=false){const t=$("toast");t.textContent=msg;t.className="toast show"+(err?" err":"");setTimeout(()=>t.className="toast",2600);}
+async function api(path, opts={}){
+  const res = await fetch(API_BASE+path, {headers:{"Content-Type":"application/json"}, ...opts});
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.error || ("HTTP "+res.status));
+  return data;
+}
+function fmtWhen(iso){
+  if(!iso) return "";
+  const d=new Date(iso);
+  return d.toLocaleDateString(undefined,{month:"short",day:"numeric"})+" · "+d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
+}
+
+/* ====== AUTH ====== */
+function setMode(m){
+  mode=m;
+  $("tabLogin").classList.toggle("on",m==="login");
+  $("tabReg").classList.toggle("on",m==="register");
+  $("regFields").classList.toggle("hidden",m!=="register");
+  $("authBtn").textContent = m==="login"?"Log in":"Create account";
+  $("authMsg").textContent="";
+}
+async function doAuth(){
+  const email=$("f-email").value.trim(), password=$("f-pass").value;
+  if(!email||!password){$("authMsg").textContent="Email and password required.";return;}
+  $("authBtn").disabled=true;
+  try{
+    if(mode==="register"){
+      const body={
+        name:$("f-name").value.trim(), email, password,
+        branch:$("f-branch").value.trim(), year:$("f-year").value.trim(),
+        phone:$("f-phone").value.trim(),
+        subjects:$("f-subjects").value.split(",").map(s=>s.trim()).filter(Boolean)
+      };
+      const {student}=await api("/auth/register",{method:"POST",body:JSON.stringify(body)});
+      state.student=student;
+    } else {
+      const {student}=await api("/auth/login",{method:"POST",body:JSON.stringify({email,password})});
+      state.student=student;
+    }
+    enterApp();
+  }catch(e){ $("authMsg").textContent=e.message; }
+  finally{ $("authBtn").disabled=false; }
+}
+function logout(){ state.student=null; state.tasks=[]; state.autos=[]; $("appView").classList.add("hidden"); $("authView").classList.remove("hidden"); }
+
+/* ====== APP ====== */
+async function enterApp(){
+  $("authView").classList.add("hidden");
+  $("appView").classList.remove("hidden");
+  const s=state.student;
+  $("u-name").textContent=s.name||"Student";
+  $("u-meta").textContent=[s.branch,s.year].filter(Boolean).join(" · ");
+  const hour=new Date().getHours();
+  $("greeting").textContent=(hour<12?"Good morning":hour<17?"Good afternoon":"Good evening")+", "+(s.name||"there").split(" ")[0]+".";
+  $("dateline").textContent=new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
+  $("tip").textContent=TIPS[Math.floor(Math.random()*TIPS.length)];
+  await Promise.all([loadTasks(), loadAutos()]);
+}
+async function loadTasks(){
+  try{ const {tasks}=await api("/tasks?studentId="+state.student.id); state.tasks=tasks||[]; }catch{ state.tasks=[]; }
+  renderTasks();
+}
+async function loadAutos(){
+  try{ const {automations}=await api("/automations?studentId="+state.student.id); state.autos=automations||[]; }catch{ state.autos=[]; }
+  renderAutos();
+}
+function renderTasks(){
+  const el=$("taskList");
+  if(!state.tasks.length){ el.innerHTML='<div class="empty">No deadlines yet. Add one to get a WhatsApp + calendar event.</div>'; return; }
+  el.innerHTML=state.tasks.map(t=>`
+    <div class="task">
+      <div style="flex:1">
+        <div class="when">${fmtWhen(t.deadline)}</div>
+        <div class="t-title">${esc(t.title)}</div>
+      </div>
+      ${t.subject?`<span class="pill">${esc(t.subject)}</span>`:""}
+    </div>`).join("");
+}
+function renderAutos(){
+  const el=$("autoList");
+  if(!state.autos.length){ el.innerHTML='<div class="empty">Triggers will show here as you add deadlines.</div>'; return; }
+  el.innerHTML=state.autos.map(a=>autoRow(a.type,a.status,a.detail)).join("");
+}
+function autoRow(type,status,detail){
+  const cal=type==="notice";
+  return `<div class="auto">
+    <div class="icn" style="background:${cal?'rgba(255,200,97,.18)':'rgba(47,230,214,.18)'}">${cal?'📣':'⏰'}</div>
+    <div><div style="font-weight:600">${cal?'Notice broadcast':'Deadline reminder'}</div>
+    <div class="dim" style="font-size:11.5px">${esc(detail||'')}</div></div>
+    <span class="badge ${status==='success'?'b-success':'b-pending'}">${status==='success'?'WhatsApp sent':'sending…'}</span>
+  </div>`;
+}
+function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+/* ====== ADD TASK — the magic moment ====== */
+async function addTask(){
+  const title=$("t-title").value.trim(), deadline=$("t-deadline").value;
+  if(!title||!deadline){ toast("Title and due date needed",true); return; }
+  $("addBtn").disabled=true; $("addBtn").textContent="Sending…";
+  // optimistic pending row at top of automations
+  state.autos.unshift({type:"deadline",status:"pending",detail:title}); renderAutos();
+  try{
+    const body={
+      studentId:state.student.id, title,
+      subject:$("t-subject").value.trim(),
+      deadline:new Date(deadline).toISOString(),
+      reminderTime:$("t-remind").value?new Date($("t-remind").value).toISOString():null,
+      addToCalendar:$("t-cal").checked
+    };
+    const {automation}=await api("/tasks",{method:"POST",body:JSON.stringify(body)});
+    // reflect real result
+    state.autos[0].status = automation && automation.ok ? "success":"pending";
+    renderAutos();
+    toast(automation && automation.ok ? "WhatsApp + calendar event fired 🎉" : "Saved — automation pending");
+    ["t-title","t-subject","t-deadline","t-remind"].forEach(i=>$(i).value="");
+    await loadTasks();
+  }catch(e){ state.autos.shift(); renderAutos(); toast(e.message,true); }
+  finally{ $("addBtn").disabled=false; $("addBtn").textContent="Add deadline & notify"; }
+}
+
+/* ====== NOTICE SUMMARIZER ====== */
+async function summarize(){
+  const noticeText=$("n-text").value.trim();
+  if(!noticeText){ toast("Paste a notice first",true); return; }
+  $("sumBtn").disabled=true; $("sumBtn").textContent="Summarizing…";
+  try{
+    const {bullets}=await api("/ai/summarize",{method:"POST",body:JSON.stringify({noticeText})});
+    state.lastSummary=bullets;
+    const ul=$("n-bullets");
+    ul.innerHTML=bullets.map(b=>`<li>${esc(b)}</li>`).join("");
+    ul.classList.remove("hidden"); $("castBtn").classList.remove("hidden");
+  }catch(e){ toast(e.message,true); }
+  finally{ $("sumBtn").disabled=false; $("sumBtn").textContent="Summarize"; }
+}
+async function broadcast(){
+  const noticeText=$("n-text").value.trim();
+  const phoneList=$("n-phones").value.split(",").map(s=>s.trim()).filter(Boolean);
+  $("castBtn").disabled=true; $("castBtn").textContent="Broadcasting…";
+  state.autos.unshift({type:"notice",status:"pending",detail:$("n-title").value.trim()||"College notice"}); renderAutos();
+  try{
+    const body={
+      noticeText, eventTitle:$("n-title").value.trim()||"College Notice",
+      eventDate:$("n-date").value?new Date($("n-date").value).toISOString():null, phoneList
+    };
+    const {automation}=await api("/ai/broadcast",{method:"POST",body:JSON.stringify(body)});
+    state.autos[0].status = automation && automation.ok ? "success":"pending"; renderAutos();
+    toast(automation && automation.ok ? "Broadcast sent to "+(phoneList.length||"the")+" group 📣" : "Sent — pending");
+  }catch(e){ state.autos.shift(); renderAutos(); toast(e.message,true); }
+  finally{ $("castBtn").disabled=false; $("castBtn").textContent="Broadcast to group"; }
+}
+</script>
+</body>
+</html>

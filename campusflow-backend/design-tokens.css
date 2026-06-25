@@ -1,0 +1,42 @@
+/* CampusFlow design tokens — hand to P3. Drop into index.css / globals.
+   Dark-mode-native "counting room" aesthetic = instant +5 polish points.
+   Fonts: add to index.html <head>:
+   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"> */
+
+:root {
+  /* base */
+  --bg:        #0c1b1f;   /* deep petrol */
+  --surface:   #122a30;   /* card */
+  --surface-2: #18373f;   /* raised */
+  --border:    #235059;
+
+  /* text */
+  --text:      #e8f6f4;
+  --text-dim:  #8fb3b3;
+
+  /* accents */
+  --aqua:      #2fe6d6;   /* primary actions, success */
+  --mint:      #7ef0b0;   /* positive / "sent" */
+  --amber:     #ffc861;   /* warnings, pending, at-risk */
+  --coral:     #ff7a6b;   /* errors / overdue */
+
+  /* status */
+  --success: var(--mint);
+  --pending: var(--amber);
+  --danger:  var(--coral);
+
+  --radius: 14px;
+  --shadow: 0 6px 24px rgba(0,0,0,.35);
+  --font-sans: "Space Grotesk", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* quick starting styles P3 can extend */
+body { background: var(--bg); color: var(--text); font-family: var(--font-sans); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+.btn-primary { background: var(--aqua); color: #04181a; font-weight: 600; border: 0; border-radius: 10px; }
+.badge-success { color: var(--success); } .badge-pending { color: var(--pending); }
+.mono { font-family: var(--font-mono); }
+
+/* Tailwind users: map these in tailwind.config.js theme.extend.colors instead:
+   petrol:'#0c1b1f', aqua:'#2fe6d6', mint:'#7ef0b0', amber:'#ffc861', coral:'#ff7a6b' */
